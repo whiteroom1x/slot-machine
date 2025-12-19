@@ -1,7 +1,0 @@
-{
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "roots": [
-    "frontend"
-  ]
-}

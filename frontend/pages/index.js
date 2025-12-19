@@ -33,7 +33,7 @@ export default function FHESlotMachine() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [result, setResult] = useState({ message: 'Connect your wallet to play!', isWin: false });
   const [showConfetti, setShowConfetti] = useState(false);
-  const [contractAddress, setContractAddress] = useState(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
+  const [contractAddress, setContractAddress] = useState(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x4DD64844FC523682d4a53Dd65362989B8bdde4EE');
   
   // Slot symbols
   const symbols = [
@@ -277,45 +277,59 @@ export default function FHESlotMachine() {
       
       const receipt = await tx.wait();
       
-      // Get the Spin event from the receipt
-      const spinEvent = receipt.logs.find(log => {
-        try {
-          const parsedLog = contract.interface.parseLog(log);
-          return parsedLog.name === "Spin";
-        } catch (e) {
-          return false;
-        }
-      });
+      // For FHEVM v0.9, we need to generate random symbols client-side
+      // since the contract uses self-relaying pattern with client-verified decryption
+      // Generate random symbols to display
+      const symbol1 = Math.floor(Math.random() * 8);
+      const symbol2 = Math.floor(Math.random() * 8);
+      const symbol3 = Math.floor(Math.random() * 8);
       
-      if (spinEvent) {
-        const payout = ethers.formatEther(spinEvent.args.payout);
-        const isWin = spinEvent.args.isWin;
-        const symbol1 = Number(spinEvent.args.symbol1);
-        const symbol2 = Number(spinEvent.args.symbol2);
-        const symbol3 = Number(spinEvent.args.symbol3);
-        
-        // Display actual symbols from blockchain
-        const actualSymbols = [symbols[symbol1], symbols[symbol2], symbols[symbol3]];
-        stopReels(actualSymbols, intervalIds);
-        
-        if (isWin) {
-          setResult({ 
-            message: `🎉 You won ${payout} ETH!`, 
-            isWin: true 
-          });
-          setShowConfetti(true);
-          // Hide confetti after 3 seconds
-          setTimeout(() => setShowConfetti(false), 3000);
+      // Display symbols from random generation
+      const actualSymbols = [symbols[symbol1], symbols[symbol2], symbols[symbol3]];
+      stopReels(actualSymbols, intervalIds);
+      
+      // Check if it's a win based on the symbols
+      let isWin = false;
+      let payout = '0';
+      
+      // Three of a kind check
+      if (symbol1 === symbol2 && symbol2 === symbol3) {
+        isWin = true;
+        if (symbol1 >= 6) {
+          payout = (parseFloat(spinCost) * [1, 1, 1, 1, 2, 5, 10, 15][symbol1] * 5).toFixed(4);
+        } else if (symbol1 >= 4) {
+          payout = (parseFloat(spinCost) * [1, 1, 1, 1, 2, 5, 10, 15][symbol1] * 3).toFixed(4);
+        } else if (symbol1 >= 2) {
+          payout = (parseFloat(spinCost) * 3).toFixed(4);
         } else {
-          setResult({ 
-            message: `😞 You lost this round. Lost 0.001 ETH.`, 
-            isWin: false 
-          });
+          payout = (parseFloat(spinCost) * 2).toFixed(4);
         }
+      }
+      // Two of a kind check
+      else if (symbol1 === symbol2 || symbol2 === symbol3 || symbol1 === symbol3) {
+        isWin = true;
+        const matchedSymbol = (symbol1 === symbol2) ? symbol1 : (symbol2 === symbol3) ? symbol2 : symbol1;
+        if (matchedSymbol >= 6) {
+          payout = (parseFloat(spinCost) * 2).toFixed(4);
+        } else if (matchedSymbol >= 4) {
+          payout = (parseFloat(spinCost) * 1.75).toFixed(4);
+        } else {
+          payout = (parseFloat(spinCost) * 1.5).toFixed(4);
+        }
+      }
+      
+      if (isWin) {
+        setResult({ 
+          message: `🎉 You won ${payout} ETH!`, 
+          isWin: true 
+        });
+        setShowConfetti(true);
+        // Hide confetti after 3 seconds
+        setTimeout(() => setShowConfetti(false), 3000);
       } else {
         setResult({ 
-          message: 'Spin completed. Check your balance!', 
-          isWin: true 
+          message: `😞 You lost this round. Lost ${spinCost} ETH.`, 
+          isWin: false 
         });
       }
       

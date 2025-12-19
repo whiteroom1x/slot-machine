@@ -1,0 +1,19 @@
+{
+  "name": "fhe-slot-machine",
+  "version": "1.0.0",
+  "description": "FHE Slot Machine - Privacy-Preserving P2E Game",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy": "npx hardhat run scripts/deploy.js --network sepolia",
+    "test": "npx hardhat test"
+  },
+  "devDependencies": {
+    "hardhat": "^2.19.0",
+    "@nomiclabs/hardhat-ethers": "^2.2.3"
+  },
+  "dependencies": {
+    "@fhevm/solidity": "^0.9.1",
+    "@openzeppelin/contracts": "^4.9.3",
+    "ethers": "^6.15.0"
+  }
+}

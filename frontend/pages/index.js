@@ -33,7 +33,7 @@ export default function FHESlotMachine() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [result, setResult] = useState({ message: 'Connect your wallet to play!', isWin: false });
   const [showConfetti, setShowConfetti] = useState(false);
-  const [contractAddress, setContractAddress] = useState('0x4DD64844FC523682d4a53Dd65362989B8bdde4EE');
+  const [contractAddress, setContractAddress] = useState(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS);
   
   // Slot symbols
   const symbols = [
